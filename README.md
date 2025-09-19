@@ -1,5 +1,5 @@
 🌤️ Advanced Weather App
--> An interactive weather application built with HTML, CSS, and JavaScript that allows users to:
+An interactive weather application built with HTML, CSS, and JavaScript that allows users to:
 -> Search weather details for any city.
 -> Get weather updates for their current location.
 -> View a 5-day temperature forecast using Chart.js.
