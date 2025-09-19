@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Weather App</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #36d1dc, #5b86e5);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      transition: background 0.5s, color 0.5s;
+    }
+    .dark-mode {
+      background: #1e1e1e;
+      color: white;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    input, select {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #ff9800;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e68900;
+    }
+    img {
+      width: 80px;
+      height: 80px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🌤️ Advanced Weather App</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name" />
+    <button onclick="getWeather()">Get Weather</button>
+    <button onclick="getLocationWeather()">📍 My Location</button>
+    <button onclick="toggleDarkMode()">🌙 Toggle Theme</button>
+    <select id="langSelect">
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+      <option value="es">Spanish</option>
+    </select>
+
+    <div id="weatherInfo"></div>
+    <canvas id="forecastChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    const apiKey = "cea71d29c5de482ab08192107252002";
+    let forecastChart;
+
+    function getWeather(city = null) {
+      city = city || document.getElementById("cityInput").value.trim();
+      const lang = document.getElementById("langSelect").value;
+      if (!city) return alert("Please enter a city name!");
+
+      fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=5&aqi=yes&lang=${lang}`)
+        .then(res => res.json())
+        .then(data => {
+          displayWeather(data);
+          renderForecastChart(data.forecast.forecastday);
+        })
+        .catch(() => alert("Failed to fetch weather."));
+    }
+
+    function displayWeather(data) {
+      const info = `
+        <h2>${data.location.name}, ${data.location.country}</h2>
+        <h3>${data.current.temp_c}°C - ${data.current.condition.text}</h3>
+        <img src="${data.current.condition.icon}" />
+        <p>Humidity: ${data.current.humidity}% | Wind: ${data.current.wind_kph} kph</p>
+        <p>AQI (PM2.5): ${data.current.air_quality.pm2_5.toFixed(2)}</p>
+      `;
+      document.getElementById("weatherInfo").innerHTML = info;
+    }
+
+    function renderForecastChart(forecast) {
+      const labels = forecast.map(day => day.date);
+      const temps = forecast.map(day => day.day.avgtemp_c);
+
+      if (forecastChart) forecastChart.destroy();
+
+      const ctx = document.getElementById("forecastChart").getContext("2d");
+      forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Temp (°C)',
+            data: temps,
+            borderColor: 'orange',
+            tension: 0.3,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+
+    function getLocationWeather() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude, longitude } = pos.coords;
+          getWeather(`${latitude},${longitude}`);
+        }, () => alert("Location access denied."));
+      } else {
+        alert("Geolocation not supported by browser.");
+      }
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    // Auto-refresh every 10 minutes
+    setInterval(() => {
+      const city = document.getElementById("cityInput").value.trim();
+      if (city) getWeather(city);
+    }, 10 * 60 * 1000);
+  </script>
+
+</body>
+</html>
